@@ -4,7 +4,6 @@
 set -e
 
 if ! command -v nginx >/dev/null 2>&1; then
-    apt-get update
     apt-get install -y nginx
 fi
 printf '%s\n' 'Holberton School for the win!' > /var/www/html/index.html
