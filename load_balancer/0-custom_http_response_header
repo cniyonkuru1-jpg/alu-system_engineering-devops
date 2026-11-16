@@ -90,12 +90,11 @@ HTML
 cat > /etc/nginx/sites-available/default <<'NGINX'
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
     root /var/www/html;
     index index.html;
     server_name _;
 
-    add_header X-Served-By $hostname always;
+    add_header X-Served-By "__SERVER_HOSTNAME__" always;
 
     location /redirect_me {
         return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
@@ -112,5 +111,7 @@ server {
     }
 }
 NGINX
+server_hostname="$(hostname)"
+sed -i "s/__SERVER_HOSTNAME__/${server_hostname}/g" /etc/nginx/sites-available/default
 nginx -t
-service nginx restart
+service nginx restart || service nginx start
