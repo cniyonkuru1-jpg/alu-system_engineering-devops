@@ -1,4 +1,9 @@
 # Web stack debugging #2
 
-- Script 0 runs whoami as the username passed to it.
-- Script 1 configures Nginx to run as the nginx account, listen on port 8080, and start under that account.
+## 0. Run software as another user
+
+`0-iamsomeoneelse` accepts a username and runs `whoami` as that user.
+
+## 1. Run Nginx as Nginx
+
+`1-run_nginx_as_nginx` configures Nginx to listen on port 8080, prepares its log and PID settings, and starts the Nginx master process as the `nginx` user.
