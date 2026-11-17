@@ -3,13 +3,14 @@
 set -e
 getent group nginx >/dev/null 2>&1 || groupadd -r nginx
 id -u nginx >/dev/null 2>&1 || useradd -r -M -g nginx -s /usr/sbin/nologin nginx
-if grep -q '^user ' /etc/nginx/nginx.conf; then
-	sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
+if grep -Eq '^[[:space:]]*#?[[:space:]]*user[[:space:]]+' /etc/nginx/nginx.conf; then
+	sed -i -r 's/^[[:space:]]*#?[[:space:]]*user[[:space:]].*;/user nginx;/' /etc/nginx/nginx.conf
 else
 	sed -i '1i user nginx;' /etc/nginx/nginx.conf
 fi
 sed -i -e 's/listen 80;/listen 8080;/' -e 's/listen 80 /listen 8080 /' -e 's/listen \[::\]:80;/listen [::]:8080;/' -e 's/listen \[::\]:80 /listen [::]:8080 /' /etc/nginx/sites-enabled/default
-sed -i 's#^pid .*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf
+sed -i 's#^[[:space:]]*pid .*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf
+chmod 644 /etc/nginx/nginx.conf
 mkdir -p /var/lib/nginx /var/log/nginx
 chown -R nginx:nginx /var/lib/nginx /var/log/nginx
 service nginx stop || true
