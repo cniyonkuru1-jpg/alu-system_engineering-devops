@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Install Nginx and serve the required Holberton School page on port 80.
-
-set -e
+# installing nginx on my web-01 server
 
 apt-get update -y
 apt-get install -y nginx
-printf '%s\n' 'Holberton School for the win!' > /var/www/html/index.html
-nginx -t
+
+echo "Holberton School for the win!" > /var/www/html/index.html
+
 service nginx restart
