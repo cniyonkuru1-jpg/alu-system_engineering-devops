@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Run whoami as the user passed to this script.
+if [ "$#" -ne 1 ]; then
+    printf 'Usage: %s USER\n' "$0" >&2
+    exit 1
+fi
+su -s /bin/sh -c 'whoami' "$1"
