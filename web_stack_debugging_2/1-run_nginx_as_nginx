@@ -10,9 +10,10 @@ else
 fi
 sed -i -e 's/listen 80;/listen 8080;/' -e 's/listen 80 /listen 8080 /' -e 's/listen \[::\]:80;/listen [::]:8080;/' -e 's/listen \[::\]:80 /listen [::]:8080 /' /etc/nginx/sites-enabled/default
 sed -i 's#^pid .*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf
-mkdir -p /var/log/nginx
-chown -R nginx:nginx /var/log/nginx
+mkdir -p /var/lib/nginx /var/log/nginx
+chown -R nginx:nginx /var/lib/nginx /var/log/nginx
 service nginx stop || true
+pkill -x apache2 || true
 pkill -x nginx || true
 nginx -t
 rm -f /tmp/nginx.pid /run/nginx.pid
