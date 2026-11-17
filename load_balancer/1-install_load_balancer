@@ -1,43 +1,29 @@
 #!/usr/bin/env bash
-# Install HAProxy and balance HTTP requests across both web servers.
-
-set -e
-
-apt-get update -y
-apt-get install -y haproxy
-
-if grep -q '^ENABLED=' /etc/default/haproxy; then
-    sed -i 's/^ENABLED=.*/ENABLED=1/' /etc/default/haproxy
-else
-    printf '%s\n' 'ENABLED=1' >> /etc/default/haproxy
-fi
-
-cat > /etc/haproxy/haproxy.cfg <<'HAPROXY'
+# Installs HAProxy and balances traffic between web-01 and web-02 with roundrobin
+export DEBIAN_FRONTEND=noninteractive
+apt-get -y update
+apt-get -y install haproxy
+cat > /etc/haproxy/haproxy.cfg << 'CONF'
 global
-    log /dev/log local0
-    log /dev/log local1 notice
     daemon
-    maxconn 4096
+    maxconn 256
 
 defaults
-    log global
     mode http
-    option httplog
-    option dontlognull
-    timeout connect 5s
-    timeout client 50s
-    timeout server 50s
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
 
-frontend http_front
+frontend http-in
     bind *:80
-    default_backend web_servers
+    default_backend web-backend
 
-backend web_servers
+backend web-backend
     balance roundrobin
     server 7368-web-01 18.171.162.21:80 check
     server 7368-web-02 18.171.164.153:80 check
-HAPROXY
-
-haproxy -c -f /etc/haproxy/haproxy.cfg
-update-rc.d haproxy defaults
+CONF
+if [ -f /etc/default/haproxy ]; then
+    sed -i 's/^ENABLED=0/ENABLED=1/' /etc/default/haproxy
+fi
 service haproxy restart || service haproxy start

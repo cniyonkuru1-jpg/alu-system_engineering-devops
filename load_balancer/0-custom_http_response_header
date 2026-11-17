@@ -1,118 +1,31 @@
 #!/usr/bin/env bash
-# Configure Nginx on a new web server and identify it in every response.
-
-set -e
-
-if ! command -v nginx >/dev/null 2>&1; then
-    apt-get install -y nginx
-fi
-printf '%s\n' 'Holberton School for the win!' > /var/www/html/index.html
-cat > /var/www/html/404.html <<'HTML'
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#10172a">
-    <title>404 — Lost in space</title>
-    <style>
-        :root {
-            color-scheme: dark;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #10172a;
-            color: #f5f7ff;
-        }
-        * { box-sizing: border-box; }
-        body {
-            min-height: 100vh;
-            margin: 0;
-            display: grid;
-            place-items: center;
-            overflow: hidden;
-            background:
-                radial-gradient(circle at 16% 24%, #5262c7 0 1px, transparent 2px),
-                radial-gradient(circle at 82% 18%, #dce5ff 0 1px, transparent 2px),
-                radial-gradient(circle at 73% 77%, #8998ff 0 1px, transparent 2px),
-                radial-gradient(ellipse at 50% 100%, #26346b 0, #10172a 65%);
-            background-size: 180px 180px, 230px 230px, 270px 270px, auto;
-        }
-        main {
-            width: min(92vw, 720px);
-            padding: clamp(2rem, 7vw, 5rem);
-            text-align: center;
-            border: 1px solid rgb(203 213 255 / 18%);
-            border-radius: 28px;
-            background: rgb(20 29 54 / 82%);
-            box-shadow: 0 28px 90px rgb(0 0 0 / 38%);
-            backdrop-filter: blur(12px);
-        }
-        .planet {
-            width: 116px;
-            height: 116px;
-            margin: 0 auto 1.2rem;
-            border-radius: 50%;
-            background: radial-gradient(circle at 32% 28%, #ffc5a8, #f36b72 42%, #8d3c8e 78%);
-            box-shadow: 0 0 48px rgb(243 107 114 / 32%);
-            position: relative;
-        }
-        .planet::after {
-            content: "";
-            position: absolute;
-            width: 164px;
-            height: 36px;
-            left: -24px;
-            top: 40px;
-            border: 5px solid #aebaff;
-            border-left-color: #d8ddff;
-            border-right-color: #d8ddff;
-            border-radius: 50%;
-            transform: rotate(-18deg);
-        }
-        .code { margin: 0; color: #b8c3ff; font-size: clamp(4rem, 16vw, 8rem); font-weight: 800; letter-spacing: .08em; line-height: 1; }
-        h1 { margin: 1rem 0 .5rem; font-size: clamp(1.5rem, 5vw, 2.4rem); }
-        p { color: #c7cee9; font-size: 1.05rem; line-height: 1.7; }
-        .note { color: #91a0d4; font-size: .9rem; }
-        a { color: #fff; text-underline-offset: .22em; }
-        a:focus-visible { outline: 3px solid #ffc5a8; outline-offset: 5px; border-radius: 3px; }
-    </style>
-</head>
-<body>
-    <main>
-        <div class="planet" aria-hidden="true"></div>
-        <p class="code" aria-label="Error 404">404</p>
-        <h1>Ceci n'est pas une page</h1>
-        <p>Looks like this little planet is off the map.<br>Let's get you back to familiar skies.</p>
-        <p><a href="/">Return to the home page</a></p>
-        <p class="note">No pages were harmed in this cosmic detour.</p>
-    </main>
-</body>
-</html>
-HTML
-cat > /etc/nginx/sites-available/default <<'NGINX'
+# Installs nginx with X-Served-By header set to the server hostname
+export DEBIAN_FRONTEND=noninteractive
+apt-get -y update
+apt-get -y install nginx
+mkdir -p /var/www/html
+echo "Holberton School for the win!" > /var/www/html/index.html
+echo "Ceci n'est pas une page" > /var/www/html/404.html
+rm -f /var/www/html/index.nginx-debian.html
+cat > /etc/nginx/sites-available/default << 'CONF'
 server {
     listen 80 default_server;
+    listen [::]:80 default_server;
     root /var/www/html;
-    index index.html;
+    index index.html index.htm;
     server_name _;
-
-    add_header X-Served-By "__SERVER_HOSTNAME__" always;
-
-    location /redirect_me {
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-    }
-
+    add_header X-Served-By $hostname always;
     error_page 404 /404.html;
-
     location = /404.html {
         internal;
     }
-
+    location /redirect_me {
+        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
+    }
     location / {
         try_files $uri $uri/ =404;
     }
 }
-NGINX
-server_hostname="$(hostname)"
-sed -i "s/__SERVER_HOSTNAME__/${server_hostname}/g" /etc/nginx/sites-available/default
-nginx -t
+CONF
+ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 service nginx restart || service nginx start
